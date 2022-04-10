@@ -1,3 +1,6 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
 
 #include <iostream> 
 #include <stdio.h> 
@@ -29,3 +32,5 @@ namespace MyClient
     };
 
 }
+
+#endif

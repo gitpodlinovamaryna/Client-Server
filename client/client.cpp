@@ -90,4 +90,3 @@ std::string MyClient::TcpClient::receive(int size=512)
     
     return reply;
 }
-

@@ -9,6 +9,8 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <netdb.h> 
+#include <netinet/in.h>	   
+#include <netinet/tcp.h> 
 
 namespace MyClient
 {
@@ -22,10 +24,12 @@ namespace MyClient
             int m_port;
             struct sockaddr_in serv_addr;
 
+
         public:
             TcpClient();
-            explicit TcpClient(std::string,int);
+            explicit TcpClient(std::string,int, int);
             ~TcpClient();
+            int  socket_set_keepalive (int);
             int connectToServer(std::string, int);
             int send_data(std::string data);
             std::string receive(int);

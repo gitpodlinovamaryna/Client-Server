@@ -18,15 +18,28 @@ MyClient::TcpClient::TcpClient()
     m_responseData = "";
 }
 
- MyClient::TcpClient::TcpClient(std::string ipAddress, int port):m_ipAddress(ipAddress),m_port(port)
+ MyClient::TcpClient::TcpClient(std::string ipAddress, int port, int flag)
 {
+    m_ipAddress = ipAddress;
+    m_port = port;
     m_socket = -1;
     m_responseData = "";
 }
 
+int  socket_set_keepalive (int fd)    
+{    
+   int alive;
+   alive = 1;    
+   if (setsockopt (fd, SOL_SOCKET, SO_KEEPALIVE, &alive, sizeof alive) != 0)    
+   {           
+       perror("Set keepalive error:\n");   
+        return -1;
+    }       
+    return 0;    
+}    
+
 int MyClient::TcpClient::connectToServer(std::string address , int port)
 {
-   
     if(m_socket == -1)
     {
         
@@ -35,7 +48,7 @@ int MyClient::TcpClient::connectToServer(std::string address , int port)
         {
             perror("Could not create socket");
         }
-
+        socket_set_keepalive(m_socket);
         std::cout<<"Socket created\n";
     }
    

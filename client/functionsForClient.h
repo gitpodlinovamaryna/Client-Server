@@ -1,6 +1,6 @@
 #ifndef FUNCTIONSFORCLIENT_H
 #define FUNCTIONSFORCLIENT_H
 
-void startClient();
+void startClient(int argc, char **argv);
 
 #endif

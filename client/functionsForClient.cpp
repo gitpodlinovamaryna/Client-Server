@@ -3,45 +3,60 @@
 
 void sendInteractionMsg(MyClient::TcpClient &o_client, int &port, std::string &IpAddress )
 {
-    std::string message = "";
+    o_client.connectToServer(IpAddress , port);
+    std::string message;
     do
     {
-        o_client.connectToServer(IpAddress , port);
-        std::cout << "Enter a message or close:"<<std::endl;
+        message = "";
+        std::cout << "Enter a message or empy for close:"<<std::endl;
         std::cin >> message;
         o_client.send_data(message);
     } while (message != "");
 }
 
-void startClient()
+void startClient(int argc, char **argv)
 {
     MyClient::TcpClient o_client;
-    int port,mode = 0;
+    int port;
+    int mode;
+    std::string message;
     std::string IpAddress="";
-    std::cout<<"Enter hostname : ";
-    std::cin>>IpAddress;
-    std::cout<<"Enter port : ";
-    std::cin>>port;
-    while(mode != 1 || mode != 2 || mode != 3)
+    if(argc < 4)
     {
-        std::cout<<"\nChoice mode: \n1-single message 2-interaction\n 3-close\n";
-        std::cin>>mode;
-        switch (mode)
+        mode = 2;
+        if(argc < 3)
         {
-            case 1:
-                o_client.connectToServer(IpAddress , port);
-                o_client.send_data("Maryna");
-                std::cout<<o_client.receive(1024);
-                break;
-            case 2:
-                sendInteractionMsg(o_client, port, IpAddress);
-                break;
-            case 3:
-                std::cout<<"See you soon!";
-                break;
-            default:
-                std::cout<<"mode is not an option";
-                break;
+            std::cout<<"Enter IP : ";
+            std::cin>>IpAddress;
+            if(argc < 2)
+            {
+                std::cout<<"Enter port : ";
+                std::cin>>port;
+            }
         }
+    }
+    else 
+    {
+        port = atoi(argv[1]);
+        IpAddress = argv[2];
+        mode = 1;
+        message = argv[3];
+    }
+    switch (mode)
+    {
+        case 1:
+            o_client.connectToServer(IpAddress , port);
+            o_client.send_data(message);
+            std::cout<<o_client.receive(1024);
+            break;
+        case 2:
+            sendInteractionMsg(o_client, port, IpAddress);
+            break;
+        case 3:
+            std::cout<<"See you soon!";
+            break;
+        default:
+            std::cout<<"mode is not an option";
+            break;
     }
 }

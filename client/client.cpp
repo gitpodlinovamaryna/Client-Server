@@ -13,7 +13,7 @@ using namespace MyClient;
 MyClient::TcpClient::TcpClient()
 {
     m_socket = -1;
-    m_port = 0;
+    m_port = htons(8080);
     m_ipAddress = "127.0.0.1";
     m_responseData = "";
 }
@@ -26,7 +26,12 @@ MyClient::TcpClient::TcpClient()
     m_responseData = "";
 }
 
-int  socket_set_keepalive (int fd)    
+MyClient::TcpClient::~TcpClient()
+{
+    close(m_socket);
+}
+
+int MyClient::TcpClient::socket_set_keepalive (int fd)    
 {    
    int alive;
    alive = 1;    
@@ -86,7 +91,7 @@ int MyClient::TcpClient::send_data(std::string data)
 }
 
 
-std::string MyClient::TcpClient::receive(int size=512)
+std::string MyClient::TcpClient::receive(int size=1024)
 {
     char buffer[size];
     std::string reply;

@@ -3,14 +3,15 @@
 
 
 #include <iostream> 
-#include <stdio.h> 
-#include <string.h> 
+#include <cstdio> 
+#include <cstring> 
 #include <string> 
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <netdb.h> 
 #include <netinet/in.h>	   
 #include <netinet/tcp.h> 
+#include <unistd.h>
 
 namespace MyClient
 {
@@ -19,6 +20,7 @@ namespace MyClient
     {
         private:
             int m_socket;
+            int m_connfd;
             std::string m_ipAddress;
             std::string m_responseData;
             int m_port;
@@ -26,10 +28,10 @@ namespace MyClient
 
 
         public:
-            TcpClient();
-            explicit TcpClient(std::string,int, int);
-            ~TcpClient();
-            int  socket_set_keepalive (int);
+            TcpClient();   // Initializer
+            explicit TcpClient(std::string,int, int);   // Initializer
+            ~TcpClient();                               // Destructor
+            int socket_set_keepalive (int);
             int connectToServer(std::string, int);
             int send_data(std::string data);
             std::string receive(int);

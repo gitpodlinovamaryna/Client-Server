@@ -1,4 +1,3 @@
-#include <iostream>
 #include "client.h"
 
 void sendInteractionMsg(MyClient::TcpClient &o_client, int &port, std::string &IpAddress )

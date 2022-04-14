@@ -32,6 +32,7 @@ class TcpServer
             int m_port;
             std::string m_ipAddress;
             std::string m_responseData;
+            std::string m_receiveData;
             struct sockaddr_in serv_addr;
             keepaliveOpt m_keepaliveOpt;
 

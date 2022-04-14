@@ -36,13 +36,13 @@ int TcpServer::createSocket()
     {
         
         m_serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (m_serverSocket == -1)
+        if (m_serverSocket != 0)
         {
             perror("Could not create socket");
             return -1;
         }
         
-        if(set_keepalive(m_serverSocket) == -1)
+        if(set_keepalive(m_serverSocket) != 0)
         {
             perror("setsockopt()");
             return -1;
@@ -53,16 +53,32 @@ int TcpServer::createSocket()
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
     serv_addr.sin_port = m_port;
-    bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr));
-    listen(m_serverSocket, 1);
-    m_client = accept(m_serverSocket, (struct sockaddr *) NULL, NULL);
-    
 
+    if(bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr)) < 0)
     {
-        /* data */
-    };
-    ))
+        perror("bind failed");
+        return -1;
+    }
 
+    if(listen(m_serverSocket, 1) < 0)
+    {
+        perror("listen error");
+        return -1;
+    }
+
+    if((m_client = accept(m_serverSocket, (struct sockaddr *) NULL, NULL)) < 0)
+    {
+        perror("accept error");
+        return -1;
+    }
+    std::string reply = "";
+    do{
+        char buffer[1024];
+        read(m_client,buffer,1024);
+        reply = receive(1024);
+        send_data();
+    }while (reply != "");
+   
     return 0;
 }
         
@@ -108,6 +124,6 @@ std::string TcpServer::receive(int size=1024)
 
     reply = buffer;
     m_responseData = reply+"responce from server";
-    
     return reply;
+    
 }

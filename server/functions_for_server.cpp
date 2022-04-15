@@ -1,4 +1,4 @@
-#include "functionsForServer.h"
+#include "functions_for_server.h"
 
 
 void startServer(int argc, char **argv)
@@ -22,5 +22,5 @@ void startServer(int argc, char **argv)
         port = atoi(argv[1]);
         IpAddress = argv[2];
     }
-    
+    o_server.createSocket();
 }

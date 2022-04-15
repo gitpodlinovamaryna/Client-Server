@@ -1,2 +1,0 @@
-/Users/marynapodlinovaw/Documents/client-server/client/buildclient/CMakeFiles/edit_cache.dir
-/Users/marynapodlinovaw/Documents/client-server/client/buildclient/CMakeFiles/rebuild_cache.dir

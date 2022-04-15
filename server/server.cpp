@@ -2,29 +2,25 @@
 
 using namespace MyServer;
 
-TcpServer::TcpServer()              // Initializer
+TcpServer::TcpServer()             
 {
-    m_serverSocket = -1;
     m_port = htons(11011);
     m_ipAddress = "127.0.0.1";
-    m_responseData = "";
-    m_keepaliveOpt.idle = 60;
-    m_keepaliveOpt.cnt = 5;
-    m_keepaliveOpt.intvl = 3;
-    m_buffesSize = 1024;
-    m_maxClients = 1;
+    init();
+}  
+
+TcpServer::TcpServer(int port)   
+{   
+    m_ipAddress =  "127.0.0.1";
+    m_port = htons(port);
+    init();
 }  
 
 TcpServer::TcpServer(std::string ipAddress, int port)
 {
-    m_ipAddress =  "127.0.0.1";   // ipAddress;
+    m_ipAddress = ipAddress;
     m_port = htons(port);
-    m_serverSocket = -1;
-    m_responseData = "";
-    m_keepaliveOpt.idle = 60;
-    m_keepaliveOpt.cnt = 5;
-    m_keepaliveOpt.intvl = 3;
-    m_maxClients = 1;
+    init();
 }
 
 TcpServer::~TcpServer()             // Destructor
@@ -32,7 +28,18 @@ TcpServer::~TcpServer()             // Destructor
     close(m_serverSocket);
 }     
 
-int TcpServer::createSocket()
+void TcpServer::init()
+{
+    m_serverSocket = -1;
+    m_responseData = "";
+    m_keepaliveOpt.idle = 60;
+    m_keepaliveOpt.cnt = 5;
+    m_keepaliveOpt.intvl = 3;
+    m_buffesSize = 1024;
+    m_maxClients = 1;
+}
+
+/*int TcpServer::createSocket()
 {
     if(m_serverSocket == -1)
     {
@@ -143,4 +150,24 @@ std::string TcpServer::receive(int size=1024)
     m_responseData = reply+"responce from server";
     return reply;
     
-}
+}*/
+
+void TcpServer::bindPort()
+{
+
+}             
+
+void TcpServer::listenToClients(int)
+{
+
+}      
+
+void TcpServer::sendMsg()
+{
+
+}              
+
+void TcpServer::receiveMsg(int)
+{
+
+}           

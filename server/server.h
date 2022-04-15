@@ -39,12 +39,14 @@ class TcpServer
             
     public:
 
-        TcpServer();                    // Constructor
+        TcpServer();
+        TcpServer(int);                    // Constructor
         TcpServer(std::string,int);     // Constructor with param
-        ~TcpServer();                   // Destructor
+        ~TcpServer();  
+        void init();                 // Destructor
         void createSocket();            // Create new socket
-        int  setKeepalive (int sock);    //Set Keepalive options
-        void bindPort(int);             //Bind to port
+        int  setKeepalive ();           //Set Keepalive options
+        void bindPort();                //Bind to port
         void listenToClients(int);      //Listen clients
         void sendMsg();                 //Send message to client
         void receiveMsg(int);           //Receive message from client

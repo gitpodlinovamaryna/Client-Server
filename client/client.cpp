@@ -13,17 +13,17 @@ using namespace MyClient;
 MyClient::TcpClient::TcpClient()
 {
     m_socket = -1;
-    m_port = htons(8080);
+    m_keepalive = 0;
+    m_port = htons(4100);
     m_ipAddress = "127.0.0.1";
-    m_responseData = "";
 }
 
  MyClient::TcpClient::TcpClient(std::string ipAddress, int port, int flag)
 {
     m_ipAddress = ipAddress;
-    m_port = port;
+    m_port = htons(port);
     m_socket = -1;
-    m_responseData = "";
+    m_keepalive = 0;
 }
 
 MyClient::TcpClient::~TcpClient()
@@ -31,32 +31,30 @@ MyClient::TcpClient::~TcpClient()
     close(m_socket);
 }
 
-int MyClient::TcpClient::socket_set_keepalive (int fd)    
-{    
-   int alive;
-   alive = 1;    
-   if (setsockopt (fd, SOL_SOCKET, SO_KEEPALIVE, &alive, sizeof alive) != 0)    
-   {           
-       perror("Set keepalive error:\n");   
-        return -1;
-    }       
-    return 0;    
-}    
-
-int MyClient::TcpClient::connectToServer(std::string address , int port)
+void TcpClient::createSocket()
 {
     if(m_socket == -1)
     {
-        
-        m_socket = socket(AF_INET , SOCK_STREAM , 0);
-        if (m_socket == -1)
+        m_socket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+
+        if (m_socket < 0)
         {
             perror("Could not create socket");
         }
-        socket_set_keepalive(m_socket);
-        std::cout<<"Socket created\n";
+        else std::cout<<"Socket created\n";
+
+        if (setsockopt (m_socket, SOL_SOCKET, SO_KEEPALIVE, &m_keepalive, sizeof(m_keepalive)) < 0)    
+        {           
+            perror("Set keepalive error:\n");   
+        }  
+        else std::cout<<"Set keepalive successfully\n";
+        
     }
-   
+}
+
+void MyClient::TcpClient::connectToServer()
+{
+    bzero((char*)&serv_addr, sizeof(serv_addr)); 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
     serv_addr.sin_port = m_port;
@@ -64,47 +62,26 @@ int MyClient::TcpClient::connectToServer(std::string address , int port)
     if( connect(m_socket , (struct sockaddr *)&serv_addr , sizeof(serv_addr)) < 0 )
     {
         perror("connect failed. Error");
-        return 0;
     }
 
-    std::cout<<"Connected to Server\n";
-    return 1;
+    else std::cout<<"Connected to Server\n";
 }
 
 
-int MyClient::TcpClient::send_data(std::string data)
-{
-    std::cout<<"Sending data...";
-    std::cout<<data;
-    std::cout<<"\n";
-    
-   
-    if( send(m_socket , data.c_str() , strlen( data.c_str() ) , 0) < 0)
-    {
-        perror("Send failed : ");
-        return 0;
-    }
-    
-    std::cout<<"Data send\n";
+void MyClient::TcpClient::send_msg(std::string msg)
+{  
 
-    return 1;
+    send(m_socket, (char*)&msg, sizeof(msg), 0);
+    std::cout<<"Send to client"<<msg<<std::endl;
+    
+    std::cout<<"Message send\n";
+
 }
 
 
-std::string MyClient::TcpClient::receive(int size=1024)
+void MyClient::TcpClient::receive()
 {
-    char buffer[size];
-    std::string reply;
-
- 
-    if( recv(m_socket , buffer , sizeof(buffer) , 0) < 0)
-    {
-        puts("receive failed");
-        return NULL;
-    }
-
-    reply = buffer;
-    m_responseData = reply;
-    
-    return reply;
+    memset(&m_msg, 0, sizeof(m_msg));
+    recv(m_socket, (char*)&m_msg, sizeof(m_msg), 0);
+    std::cout << "Receive from server: " << std::string(m_msg) << std::endl;
 }

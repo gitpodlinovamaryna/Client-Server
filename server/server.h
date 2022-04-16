@@ -28,9 +28,11 @@ class TcpServer
     private:
         
         int m_serverSocket;
+        int m_newClient;
         int m_port;
         int m_buffesSize;
         int m_maxClients;
+        char m_msg[1024];
         std::string m_ipAddress;
         std::string m_responseData;
         std::string m_receiveData;
@@ -40,16 +42,16 @@ class TcpServer
     public:
 
         TcpServer();
-        TcpServer(int);                    // Constructor
+        TcpServer(int);                 // Constructor
         TcpServer(std::string,int);     // Constructor with param
-        ~TcpServer();  
-        void init();                 // Destructor
+        ~TcpServer();                   // Destructor
+        void init();                
         void createSocket();            // Create new socket
-        int  setKeepalive ();           //Set Keepalive options
         void bindPort();                //Bind to port
-        void listenToClients(int);      //Listen clients
+        void listenToClients();         //Listen clients
+        void acceptClient();
         void sendMsg();                 //Send message to client
-        void receiveMsg(int);           //Receive message from client
+        std::string receiveMsg();       //Receive message from client
         void handle();
 
 };

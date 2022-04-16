@@ -21,20 +21,23 @@ namespace MyClient
         private:
             int m_socket;
             int m_connfd;
-            std::string m_ipAddress;
-            std::string m_responseData;
             int m_port;
+            int m_keepalive;
+            int m_buffesSize;
+            char m_msg[1024];
+            std::string m_ipAddress;
             struct sockaddr_in serv_addr;
+            
 
 
         public:
-            TcpClient();   // Initializer
-            explicit TcpClient(std::string,int, int);   // Initializer
-            ~TcpClient();                               // Destructor
-            int socket_set_keepalive (int);
-            int connectToServer(std::string, int);
-            int send_data(std::string data);
-            std::string receive(int);
+            TcpClient();                       // Initializer
+            TcpClient(std::string,int, int);   // Initializer
+            ~TcpClient();                      // Destructor
+            void createSocket();                    
+            void connectToServer();
+            void send_msg(std::string msg);
+            void receive();
     };
 
 }

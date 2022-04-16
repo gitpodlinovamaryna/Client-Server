@@ -23,4 +23,18 @@ void startServer(int argc, char **argv)
       //  IpAddress = argv[2];
     //}
     o_server.createSocket();
+    o_server.bindPort();
+    o_server.listenToClients();
+    o_server.acceptClient();
+    while (1)
+    {
+        std::string check = o_server.receiveMsg();
+        if(check == "exit")
+        {
+            std::cout<<"Bye!!!";
+            break;
+        }
+        o_server.sendMsg();
+    }
+
 }

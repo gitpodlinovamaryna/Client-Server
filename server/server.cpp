@@ -26,11 +26,13 @@ TcpServer::TcpServer(std::string ipAddress, int port)
 TcpServer::~TcpServer()             // Destructor
 {
     close(m_serverSocket);
+    close(m_newClient);
 }     
 
 void TcpServer::init()
 {
     m_serverSocket = -1;
+    m_newClient = -1;
     m_responseData = "";
     m_keepaliveOpt.idle = 60;
     m_keepaliveOpt.cnt = 5;
@@ -39,26 +41,33 @@ void TcpServer::init()
     m_maxClients = 1;
 }
 
-/*int TcpServer::createSocket()
+void TcpServer::createSocket()
 {
     if(m_serverSocket == -1)
     {
-        
         m_serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (m_serverSocket < 0)
         {
             perror("Could not create socket");
-            return -1;
         }
-        
-        if(set_keepalive(m_serverSocket) < 0)
-        {
-            perror("setsockopt()");
-            return -1;
-        }
-        std::cout<<"Socket created\n";
-    }
 
+        std::cout<<"Socket created\n";
+
+        int alive = 1;    
+        if (setsockopt (m_serverSocket, SOL_SOCKET, SO_KEEPALIVE, &alive, sizeof(alive)) < 0)    
+        {           
+            perror("Set keepalive error:\n");   
+        }  
+
+        std::cout<<"Set keepalive successfully\n";
+        
+    }
+}
+
+
+void TcpServer::bindPort()
+{
+    bzero((char*)&m_serverSocket, sizeof(m_serverSocket)); 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
     serv_addr.sin_port = m_port;
@@ -66,108 +75,42 @@ void TcpServer::init()
     if(bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr)) < 0)
     {
         perror("bind failed");
-        return -1;
     }
-
-    if(listen(m_serverSocket, 1) < 0)
-    {
-        perror("listen error");
-        return -1;
-    }
-    
-    if((m_client = accept(m_serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0)
-    {
-        perror("accept error");
-    }
-    
-    std::string reply = "";
-    do{
-        char buffer[1024];
-        read(m_client, buffer, 1024);
-        reply = receive(1024);
-        send_data();
-    }while (reply != "");
-    
-    return 0;
-}
-        
-void TcpServer::handle()
-{
-    if((m_client = accept(m_serverSocket, (struct sockaddr *) NULL, NULL)) < 0)
-    {
-        perror("accept error");
-    }
-    
-    std::string reply = "";
-    do{
-        char buffer[1024];
-        read(m_client, buffer, 1024);
-        reply = receive(1024);
-        send_data();
-    }while (reply != "");
-}
-
-int TcpServer::set_keepalive (int sock)
-{
-    int alive = 1;    
-    if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, &alive, sizeof(alive)) < 0)    
-    {           
-        perror("Set keepalive error:\n");   
-        return -1;
-    }  
-         
-    return 0;    
-}
-
-    
-int TcpServer::send_data()
-{
-    std::cout<<"Sending data ...";
-    
-    if( send(m_serverSocket , m_responseData.c_str() , strlen( m_responseData.c_str() ) , 0) < 0)
-    {
-        perror("Send failed : ");
-        return 1;
-    }
-    
-    std::cout<<"Data send\n";
-
-    return 0; 
-}
-
-std::string TcpServer::receive(int size=1024)
-{
-    char buffer[size];
-    std::string reply;
-
-    if( recv(m_serverSocket , buffer , sizeof(buffer) , 0) < 0)
-    {
-        perror("receive failed");
-        return NULL;
-    }
-
-    reply = buffer;
-    m_responseData = reply+"responce from server";
-    return reply;
-    
-}*/
-
-void TcpServer::bindPort()
-{
-
+    std::cout << "Waiting for a client to connect..." << std::endl;
 }             
 
-void TcpServer::listenToClients(int)
+void TcpServer::listenToClients()
 {
-
+    if(listen(m_serverSocket, m_maxClients) < 0)
+    {
+        perror("listen error");
+    }
 }      
+
+void TcpServer::acceptClient()
+{
+    sockaddr_in newClientAddr;
+    socklen_t newClientAddrSize = sizeof(newClientAddr);
+    m_newClient = accept(m_serverSocket, (sockaddr *)&newClientAddr, &newClientAddrSize);
+    if(m_newClient < 0)
+    {
+        perror( "Error accepting request from client!" );
+    }
+    std::cout << "Connected with client!" << std::endl;
+}
 
 void TcpServer::sendMsg()
 {
-
+    send(m_newClient, (char*)&m_msg, strlen(m_msg), 0);
+    std::cout<<"Send to client"<<m_msg<<std::endl;
 }              
 
-void TcpServer::receiveMsg(int)
+std::string TcpServer::receiveMsg()
 {
+     memset(&m_msg, 0, sizeof(m_msg));
+     recv(m_newClient, (char*)&m_msg, sizeof(m_msg), 0);
+     std::cout << "Receive from client: " << m_msg << std::endl;
+     std::string check = std::string(m_msg);
+     return check;
 
 }           

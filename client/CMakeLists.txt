@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.8.1)
+cmake_minimum_required(VERSION 3.0.0)
+
 project(client)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
-add_library(${PROJECT_NAME}
-            client.cpp
-            functions_for_client.cpp
-            main.cpp
-    
+set(SRC_LIST main.cpp sources/functions_for_client.cpp sources/client.cpp)
+
+add_executable(${PROJECT_NAME} ${SRC_LIST})

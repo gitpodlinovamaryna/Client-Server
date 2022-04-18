@@ -4,7 +4,7 @@ using namespace MyServer;
 
 TcpServer::TcpServer()             
 {
-    m_port = htons(11011);
+    m_port = htons(3000);
     m_ipAddress = "127.0.0.1";
     init();
 }  
@@ -33,19 +33,18 @@ void TcpServer::init()
 {
     m_serverSocket = -1;
     m_newClient = -1;
-    m_responseData = "";
     m_keepaliveOpt.idle = 60;
     m_keepaliveOpt.cnt = 5;
     m_keepaliveOpt.intvl = 3;
     m_buffesSize = 1024;
-    m_maxClients = 1;
+    m_maxClients = 3;
 }
 
 void TcpServer::createSocket()
 {
     if(m_serverSocket == -1)
     {
-        m_serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        m_serverSocket = (socket(AF_INET, SOCK_STREAM, 0));
         if (m_serverSocket < 0)
         {
             perror("Could not create socket");
@@ -72,11 +71,12 @@ void TcpServer::bindPort()
     serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
     serv_addr.sin_port = m_port;
 
-    if(bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr)) < 0)
-    {
-        perror("bind failed");
-    }
-    std::cout << "Waiting for a client to connect..." << std::endl;
+    //if
+    (bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr)));// < 0)
+   // {
+      //  perror("bind failed");
+    //}
+    //std::cout << "Waiting for a client to connect..." << std::endl;
 }             
 
 void TcpServer::listenToClients()
@@ -85,32 +85,36 @@ void TcpServer::listenToClients()
     {
         perror("listen error");
     }
+   
 }      
 
 void TcpServer::acceptClient()
 {
-    sockaddr_in newClientAddr;
-    socklen_t newClientAddrSize = sizeof(newClientAddr);
-    m_newClient = accept(m_serverSocket, (sockaddr *)&newClientAddr, &newClientAddrSize);
+   
+    socklen_t newClientAddrSize = sizeof(client_addr);
+    m_newClient = accept(m_serverSocket, (struct sockaddr *)&client_addr, &newClientAddrSize);
     if(m_newClient < 0)
     {
         perror( "Error accepting request from client!" );
     }
-    std::cout << "Connected with client!" << std::endl;
+   // std::cout << "Connected with client!" << std::endl;
 }
 
 void TcpServer::sendMsg()
 {
-    send(m_newClient, (char*)&m_msg, strlen(m_msg), 0);
+    puts(m_msg);
+    send(m_newClient, m_msg, number, 0);
     std::cout<<"Send to client"<<m_msg<<std::endl;
 }              
 
 std::string TcpServer::receiveMsg()
 {
      memset(&m_msg, 0, sizeof(m_msg));
-     recv(m_newClient, (char*)&m_msg, sizeof(m_msg), 0);
+     
+     number = recv(m_newClient, m_msg, sizeof(m_msg), 0);
      std::cout << "Receive from client: " << m_msg << std::endl;
      std::string check = std::string(m_msg);
+     
      return check;
 
 }           

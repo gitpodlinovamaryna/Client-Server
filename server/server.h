@@ -11,6 +11,7 @@
 #include <netinet/in.h>	   
 #include <netinet/tcp.h> 
 #include <unistd.h>
+#include <fcntl.h>
 
 namespace MyServer
 {
@@ -25,7 +26,8 @@ struct keepaliveOpt
 
 class TcpServer
 {
-    private:
+    //private:
+    public:
         
         int m_serverSocket;
         int m_newClient;
@@ -33,10 +35,12 @@ class TcpServer
         int m_buffesSize;
         int m_maxClients;
         char m_msg[1024];
+        int number;
         std::string m_ipAddress;
-        std::string m_responseData;
-        std::string m_receiveData;
+       // std::string m_responseData;
+       // std::string m_receiveData;
         struct sockaddr_in serv_addr;
+        struct sockaddr_in client_addr;
         keepaliveOpt m_keepaliveOpt;
             
     public:

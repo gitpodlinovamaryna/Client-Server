@@ -18,8 +18,7 @@ namespace MyClient
 
     class TcpClient
     {
-        public:
-        //private:
+        private:
             int m_socket;
             int m_connfd;
             int m_port;
@@ -33,11 +32,13 @@ namespace MyClient
 
         public:
             TcpClient();                       // Initializer
-            TcpClient(int);                    // Initializer
+            TcpClient(int);                    // Initializer with param m_port
             ~TcpClient();                      // Destructor
+            void setPort(int);                  
             void createSocket();                    
             void connectToServer();
-            void send_msg(std::string msg);
+            std::string send_msg();
+            void send_msg(std::string);
             void receive();
     };
 

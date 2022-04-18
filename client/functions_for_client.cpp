@@ -1,61 +1,42 @@
 #include "client.h"
-/*
-void sendInteractionMsg(MyClient::TcpClient &o_client, int &port, std::string &IpAddress )
-{
-    o_client.connectToServer(IpAddress , port);
-    std::string message;
-    do
-    {
-        message = "";
-        std::cout << "Enter a message or empy for close:"<<std::endl;
-        std::cin >> message;
-        o_client.send_data(message);
-    } while (message != "");
-}
-*/
+
 
 void startClient(int argc, char **argv)
 {
-    MyClient::TcpClient o_client; 
-    int port;
-    int mode;
-    std::string message;
-    std::string IpAddress="";
-    if(argc < 3)
+    MyClient::TcpClient o_client;                // new client
+    int mode;                                    // interaction or single message mode
+    std::string message;                         // message for single mode
+    if(argc < 3)                                 // check mode options
     {
-        mode = 2;
-        std::cout<<"Enter port : ";
+        mode = 2;                                // interaction mode
+        std::cout<<"Enter port : ";              
         int tempPort = 0;
         std::cin>>tempPort;
-        port = htons(tempPort);
-           
+        o_client.setPort(tempPort);             // Set port
     }
     else 
-    {
-        o_client.m_port = htons(atoi(argv[1]));
-        message = argv[2];
-        mode = 1;
+    { 
+        mode = 1;                                // single mode
+        o_client.setPort((atoi(argv[1])));  // set port
+        message = argv[2];                       // set message  
     }
-    switch (mode)
+
+    switch (mode)                                // choice mode
     {
-        case 1:
+        case 1:                                  // single message mode
             o_client.createSocket();
             o_client.connectToServer();
             o_client.send_msg(message);
             o_client.receive();
             break;
-        case 2:
+        case 2:                                  //interaction mode
             o_client.createSocket();
             o_client.connectToServer();
             std::string message;
-            while (message != "exit")
+            while (o_client.send_msg() != "exit")
             {
-                message = "";
-                std::cout << "Enter a message or exit to close:"<<std::endl;
-                getline(std::cin, message);
-                //std::cin >> message;
-                o_client.send_msg(message);
+                o_client.receive();
             }
-            
+            break;
     }
 }

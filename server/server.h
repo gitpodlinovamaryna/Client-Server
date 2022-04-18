@@ -29,8 +29,7 @@ struct keepaliveOpt
 
 class TcpServer
 {
-    //private:
-    public:
+    private:
         
         int m_serverSocket;
         int m_newClient;
@@ -44,20 +43,22 @@ class TcpServer
         struct sockaddr_in client_addr;
         struct keepaliveOpt m_keepaliveOpt;
             
+
     public:
 
         TcpServer();
         TcpServer(int);                 // Constructor
         TcpServer(std::string,int);     // Constructor with param
         ~TcpServer();                   // Destructor
-        void init();                
+        void init();                    // Initializer
+        void fillServAddr();             
         void createSocket();            // Create new socket
-        void bindPort();                //Bind to port
-        void listenToClients();         //Listen clients
-        void acceptClient();
-        void sendMsg();                 //Send message to client
-        std::string receiveMsg();       //Receive message from client
-
+        void bindPort();                // Bind to port
+        void listenToClients();         // Listen clients
+        void acceptClient();            // Set connection with client
+        void sendMsg();                 // Send message to client
+        std::string receiveMsg();       // Receive message from client
+        void messageExchange();         // Regulates the order in which messages are exchanged between the client and the server
 };
     
 }

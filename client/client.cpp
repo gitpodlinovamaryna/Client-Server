@@ -32,7 +32,16 @@ MyClient::TcpClient::~TcpClient()
     close(m_socket);
 }
 
-void TcpClient::createSocket()
+// Ser port in m_port
+
+void TcpClient::setPort(int port)
+{
+    m_port = htons(port);
+}
+
+// Create new client socket
+
+void TcpClient::createSocket()                  
 {
     if(m_socket == -1)
     {
@@ -42,15 +51,21 @@ void TcpClient::createSocket()
         {
             perror("\nCould not create socket: ");
         }
-        else std::cout<<"\nSocket created\n";
+        else 
+            std::cout<<"\nSocket created\n";
+        
+        // Set keepalive options
 
         if (setsockopt (m_socket, SOL_SOCKET, SO_KEEPALIVE, &m_keepalive, sizeof(m_keepalive)) < 0)    
         {           
             perror("\nSet keepalive error:\n");   
         }  
-        else std::cout<<"\nSet keepalive successfully!!!";
+        else 
+            std::cout<<"\nSet keepalive successfully!!!";
     }
 }
+
+// Connect to server 
 
 void MyClient::TcpClient::connectToServer()
 {
@@ -63,9 +78,29 @@ void MyClient::TcpClient::connectToServer()
         perror("\nconnect failed. Error: ");
     }
 
-    else std::cout<<"\nConnected to Server successfully!!!\n";
+    else 
+        std::cout<<"\nConnected to Server successfully!!!\n";
 }
 
+// Send message to server for interaction mode
+
+std::string MyClient::TcpClient::send_msg()
+{  
+    std::cout << "Enter a message or exit to close:"<<std::endl;
+    std::string msg = "";
+    getline(std::cin, msg);
+
+    if((send(m_socket, (char*)&msg, sizeof(msg), 0)) < 0)
+    {
+        perror("\nSend failed Error: ");
+    }
+    else 
+        std::cout<<"\nSend to server: "<<msg<<std::endl;
+
+    return msg;
+}
+
+// Send message to the server for single-message mode
 
 void MyClient::TcpClient::send_msg(std::string msg)
 {  
@@ -73,10 +108,10 @@ void MyClient::TcpClient::send_msg(std::string msg)
     {
         perror("\nSend failed Error: ");
     }
-    std::cout<<"\nSend to server: "<<msg<<std::endl;
+    else std::cout<<"\nSend to server: "<<msg<<std::endl;
 }
 
-
+// Receive message from server
 void MyClient::TcpClient::receive()
 {
     memset(&m_msg, 0, sizeof(m_msg));

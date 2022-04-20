@@ -15,6 +15,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/signal.h>
+#include <thread>
+#include <mutex>
+#include <shared_mutex>
 
 namespace MyServer
 {

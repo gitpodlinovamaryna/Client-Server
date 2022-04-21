@@ -13,5 +13,5 @@ void startServer(int argc, char **argv)
     o_server.fillServAddr();
     o_server.listenToClients();
     o_server.acceptClient();
-    o_server.messageExchange();         //
+   // o_server.messageExchange();         
 }

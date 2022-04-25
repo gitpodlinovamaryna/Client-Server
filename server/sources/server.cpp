@@ -26,18 +26,17 @@ TcpServer::TcpServer(std::string ipAddress, int port)
 TcpServer::~TcpServer()             // Destructor
 {
     close(m_serverSocket);
-    close(m_newClient);
 }     
 
 void TcpServer::init()
 {
     m_serverSocket = -1;
-    m_newClient = -1;
     m_keepaliveOpt.idle = 60;
     m_keepaliveOpt.cnt = 5;
     m_keepaliveOpt.intvl = 3;
     m_buffesSize = 1024;
     m_maxClients = 3;
+    m_currentClients = 0;
 }
 
 void TcpServer::fillServAddr()
@@ -119,15 +118,15 @@ void TcpServer::messageExchange(ClientClass newClient)
 {
     memset(&newClient.msgClient, 0, sizeof(newClient.msgClient));
     
-    while((newClient.number = recv(m_newClient, newClient.msgClient, sizeof(newClient.msgClient), 0))>0)
+    while((newClient.number = recv(newClient.ClientSocket, newClient.msgClient, sizeof(newClient.msgClient), 0))>0)
     {
         std::cout << "Receive from client: " << newClient.msgClient << std::endl;
-        send(m_newClient, newClient.msgClient, newClient.number, 0);
+        send(newClient.ClientSocket, newClient.msgClient, newClient.number, 0);
         std::cout<<"Send to client: "<< newClient.msgClient <<std::endl;
     }
 }
 //Set connection with client
-void TcpServer::acceptClient()
+int TcpServer::acceptClient()
 {
     while(m_maxClients <= clientList.size())
     {
@@ -144,11 +143,11 @@ void TcpServer::acceptClient()
     {
         std::cout << "Connected with client!" << std::endl;
         newClient.flagConnect = true;
-        clientList.__emplace_back(newClient);
+        m_currentClients++;
         clientList.push_back(newClient);
-        std::thread handler_thread = (messageExchange, newClient);
-
+        
     }
+    return newClient.ClientSocket;
 }
 
 
@@ -176,9 +175,26 @@ std::string TcpServer::receiveMsg(ClientClass newClient)
      return check;
 }          
 
-
+ClientClass TcpServer::getClient(int index)
+{
+    return clientList[index];
+}
 // Regulates the order in which messages are exchanged between the client and the server
 
+int TcpServer::getClientListSize()
+{
+    return clientList.size();
+}
+
+void TcpServer::setCurrentClients(int count)
+{
+    m_currentClients = count;
+}
+
+int TcpServer::getCurrentClients()
+{
+    return m_currentClients;
+}
 
 void TcpServer::helloNewClient()
 {

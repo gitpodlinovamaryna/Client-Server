@@ -31,19 +31,21 @@ struct keepaliveOpt
             int intvl;
         };
 
+ 
 struct ClientClass
     {
-        int ClientSocket;
-        struct sockaddr_in client_addr;
-        socklen_t newClientAddrSize;
-        bool flagConnect;
-        char msgClient[1024];
-        int number;
+            int ClientSocket;
+            struct sockaddr_in client_addr;
+            socklen_t newClientAddrSize;
+            bool flagConnect;
+            char msgClient[1024];
+            int number;
+            ~ClientClass();
     };
 
 class TcpServer
 {
-        class ClientClass;
+       
 
     private:
         
@@ -51,6 +53,7 @@ class TcpServer
         int m_port;
         int m_buffesSize;
         int m_maxClients;
+        int m_currentClients;
         std::string m_ipAddress;
         struct sockaddr_in serv_addr;
         struct keepaliveOpt m_keepaliveOpt;
@@ -64,11 +67,15 @@ class TcpServer
         TcpServer(std::string,int);     // Constructor with param
         ~TcpServer();                   // Destructor
         void init();                    // Initializer
+        ClientClass getClient(int index);
+        int getClientListSize();
+        void setCurrentClients(int);
+        int getCurrentClients();
         void fillServAddr();             
         void createSocket();            // Create new socket
         void bindPort();                // Bind to port
         void listenToClients();         // Listen clients
-        void acceptClient();            // Set connection with client
+        int acceptClient();            // Set connection with client
         void sendMsg(ClientClass newClient);                 // Send message to client
         std::string receiveMsg(ClientClass newClient);       // Receive message from client
         void messageExchange(ClientClass newClient);         // Regulates the order in which messages are exchanged between the client and the server

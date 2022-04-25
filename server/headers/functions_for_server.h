@@ -3,11 +3,13 @@
 
 #include <iostream>
 #include "server.h"
+#include <thread>
+
 
 using namespace MyServer;
 
 void startServer(int argc, char **argv);
-
+void messageExchange(int, TcpServer&);
 #endif
 
 

@@ -6,13 +6,23 @@
                 "${workspaceFolder}/**"
             ],
             "defines": [],
-            "macFrameworkPath": [
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk/System/Library/Frameworks"
+            "macFrameworkPath": [],
+            "compilerPath": "/usr/local/bin/gcc-11",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "macos-gcc-arm64"
+        },
+        {
+            "name": "h",
+            "includePath": [
+                "${workspaceFolder}/**"
             ],
-            "compilerPath": "/usr/bin/g++",
-            "cStandard": "c11",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "macos-clang-arm64"
+            "defines": [],
+            "macFrameworkPath": [],
+            "compilerPath": "/usr/local/bin/gcc-11",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "macos-gcc-arm64"
         }
     ],
     "version": 4

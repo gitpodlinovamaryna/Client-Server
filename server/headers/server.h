@@ -1,165 +1,93 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include<iostream>
-#include <queue>
+
+#include <cstdint>
+#include <functional>
 #include <thread>
-#include <chrono>
-#include <mutex>
-#include <future>
-#include <unordered_set>
-#include <atomic>
-#include <vector>
-#include <cstdio> 
-#include <cstring> 
-#include <string> 
-#include <sys/socket.h> 
+#include <list>
+#include <string>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <arpa/inet.h> 
 #include <netdb.h> 
-#include <netinet/in.h>	   
 #include <netinet/tcp.h> 
-#include <unistd.h>
-namespace MyServer
+#include <iostream>
+
+//Buffer for receiving data from the client
+static constexpr uint16_t buffer_size = 4096;
+
+class TcpServer 
 {
-
-
-class thread_pool {
-    
-private: 
-    std::queue<std::pair<std::future<void>, int64_t> > q; // очередь задач - хранит функцию(задачу), которую нужно исполнить и номер данной задачи
-    std::mutex q_mtx;
-    std::condition_variable q_cv;
-
-    std::unordered_set<int64_t> completed_task_ids;      // помещаем в данный контейнер исполненные задачи
-    std::condition_variable completed_task_ids_cv;
-    std::mutex completed_task_ids_mtx;
-
-    std::vector<std::thread> threads;
-
-
-    std::atomic<bool> quite{ false };                    // флаг завершения работы thread_pool
-    std::atomic<int64_t> last_idx = 0;                   // переменная хранящая id который будет выдан следующей задаче
 public:
-    thread_pool(uint32_t num_threads) {
-        threads.reserve(num_threads);
-        for (uint32_t i = 0; i < num_threads; ++i) {
-            threads.emplace_back(&thread_pool::run, this);
-        }
-    }
+    class Client;
 
-    template <typename Func, typename ...Args>
-    int64_t add_task(const Func& task_func, Args&&... args) {
-        int64_t task_idx = last_idx++;
+     //Client handler callback type
+    typedef std::function<void(Client)> handler_function_t;
 
-        std::lock_guard<std::mutex> q_lock(q_mtx);
-        q.emplace(std::async(std::launch::deferred, task_func, args...), task_idx);
-        q_cv.notify_one();
-        return task_idx;
-    }
-
-    void wait(int64_t task_id) {
-        std::unique_lock<std::mutex> lock(completed_task_ids_mtx);
-        completed_task_ids_cv.wait(lock, [this, task_id]()->bool {
-            return completed_task_ids.find(task_id) != completed_task_ids.end();
-            });
-    }
-
-    void wait_all() {
-        std::unique_lock<std::mutex> lock(q_mtx);
-        completed_task_ids_cv.wait(lock, [this]()->bool {
-            std::lock_guard<std::mutex> task_lock(completed_task_ids_mtx);
-            return q.empty() && last_idx == completed_task_ids.size();
-            });
-    }
-
-    bool calculated(int64_t task_id) {
-        std::lock_guard<std::mutex> lock(completed_task_ids_mtx);
-        if (completed_task_ids.find(task_id) != completed_task_ids.end()) {
-            return true;
-        }
-        return false;
-    }
-
-    ~thread_pool() {
-        quite = true;
-        for (uint32_t i = 0; i < threads.size(); ++i) {
-            q_cv.notify_all();
-            threads[i].join();
-        }
-    }
+     //Server Status
+    enum class status : uint8_t 
+    {
+        up = 0,
+        err_socket_init = 1,
+        err_socket_bind = 2,
+        err_socket_listening = 3,
+        close = 4
+    };
 
 private:
 
-    void run() {
-        while (!quite) {
-            std::unique_lock<std::mutex> lock(q_mtx);
-            q_cv.wait(lock, [this]()->bool { return !q.empty() || quite; });
+    uint16_t port; 
+    status _status = status::close;
+    handler_function_t handler;
+    std::string m_ipAddress = "127.0.0.1";
+    int m_keepalive = 0;
+    std::thread handler_thread;
+    std::list<std::thread> client_handler_threads;
+    std::list<std::thread::id> client_handling_end;
+    int serv_socket;
+    void handlingLoop();
 
-            if (!q.empty()) {
-                auto elem = std::move(q.front());
-                q.pop();
-                lock.unlock();
+public:
 
-                elem.first.get();
+    TcpServer(const uint16_t port, handler_function_t handler);
+    ~TcpServer();
 
-                std::lock_guard<std::mutex> lock(completed_task_ids_mtx);
-                completed_task_ids.insert(elem.second);
+    //! Set client handler
+    void setHandler(handler_function_t handler);
 
-                completed_task_ids_cv.notify_all();
-            }
-        }
-    }
+    uint16_t getPort() const;
+    uint16_t setPort(const uint16_t port);
+    status getStatus() const {return _status;}
+
+    status restart();
+    status start();
+    void stop();
+    void joinLoop();
+
 };
 
-
-struct keepaliveOpt
-        {
-            int idle;
-            int cnt;
-            int intvl;
-        };
-
-
-class TcpServer
+class TcpServer::Client 
 {
-    struct ClientClass
-    {
-        int newClient;
-        struct sockaddr_in new_client_addr;
-    };
 
-    private:
-        
-        int m_serverSocket;
-        int m_newClient;
-        int m_port;
-        int m_buffesSize;
-        int m_maxClients;
-        int number;
-        char m_msg[1024];
-        std::string m_ipAddress;
-        struct sockaddr_in serv_addr;
-        struct sockaddr_in client_addr;
-        struct keepaliveOpt m_keepaliveOpt;
-            
+    int socket;
+    struct sockaddr_in address;
+    char buffer[buffer_size];
 
-    public:
+public:
 
-        TcpServer();
-        TcpServer(int);                 // Constructor
-        TcpServer(std::string,int);     // Constructor with param
-        ~TcpServer();                   // Destructor
-        void init();                    // Initializer
-        void fillServAddr();             
-        void createSocket();            // Create new socket
-        void bindPort();                // Bind to port
-        void listenToClients();         // Listen clients
-        void acceptClient();            // Set connection with client
-        void sendMsg();                 // Send message to client
-        std::string receiveMsg();       // Receive message from client
-        void messageExchange();         // Regulates the order in which messages are exchanged between the client and the server
-        void newThreadForClient();
+    Client(int socket, struct sockaddr_in address);
+    Client(const Client& other);
+    ~Client();
+    uint32_t getHost() const;
+    uint16_t getPort() const;
+    void sendMsg();
+    std::string receiveMsg();
+    void messageExchange();
 };
-    
-}
-#endif
+
+#endif 

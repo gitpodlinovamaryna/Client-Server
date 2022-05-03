@@ -1,168 +1,201 @@
-
 #include "../headers/server.h"
+#include <chrono>
+#include <iostream>
+#include <string.h> 
+#include <string> 
 
-using namespace MyServer;
+//The constructor accepts:
+//port - the port on which we will run the server
+//handler - callback function to run when the client connects
+TcpServer::TcpServer(const uint16_t port, handler_function_t handler) : port(port), handler(handler) {}
 
-TcpServer::TcpServer()                  //constractor
+
+TcpServer::~TcpServer() 
 {
-    m_port = htons(3000);
-    m_ipAddress = "127.0.0.1";
-    init();
-}  
-
-TcpServer::TcpServer(int port)   
-{   
-    m_ipAddress =  "127.0.0.1";
-    m_port = htons(port);
-    init();
-}  
-
-TcpServer::TcpServer(std::string ipAddress, int port)
-{
-    m_ipAddress = ipAddress;
-    m_port = htons(port);
-    init();
-}
-
-TcpServer::~TcpServer()             // Destructor
-{
-    close(m_serverSocket);
-    close(m_newClient);
-}     
-
-void TcpServer::init()
-{
-    m_serverSocket = -1;
-    m_newClient = -1;
-    m_keepaliveOpt.idle = 60;
-    m_keepaliveOpt.cnt = 5;
-    m_keepaliveOpt.intvl = 3;
-    m_buffesSize = 1024;
-    m_maxClients = 3;
-}
-
-void TcpServer::fillServAddr()
-{
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
-    serv_addr.sin_port = m_port;
+    if(_status == status::up)
+    stop();
 }
 
 
-// Create new socket TCP
-void TcpServer::createSocket()
+//Set a callback function to run when a client connects
+void TcpServer::setHandler(TcpServer::handler_function_t handler)
 {
-    if(m_serverSocket == -1)
-    {
-        m_serverSocket = (socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
-        if (m_serverSocket < 0)
-        {
-            perror("Could not create socket");
-        }
-
-        std::cout<<"Socket created\n";
-
-
-        // Set keepalive options
-        if (setsockopt (m_serverSocket, SOL_SOCKET, SO_KEEPALIVE, &m_keepaliveOpt.idle, sizeof(m_keepaliveOpt.idle)) < 0)    
-        {           
-            perror("Set keepalive error:\n");   
-        }  
-        else std::cout<<"Set keepalive successfully\n";
-
-
-        //Set keepalive interval
-        if (setsockopt(m_serverSocket, IPPROTO_TCP, TCP_KEEPINTVL, &m_keepaliveOpt.intvl, sizeof(m_keepaliveOpt.intvl)) < 0)
-        {
-            perror("Set keepalive interval error:\n");  
-        }
-
-        else std::cout<<"Set keepalive interval successfully\n";
-
-
-        //Set keepalive count
-        if (setsockopt(m_serverSocket, IPPROTO_TCP, TCP_KEEPCNT, &m_keepaliveOpt.cnt, sizeof(m_keepaliveOpt.cnt)) < 0)
-        {
-            perror("Set keepalive count error:\n");  
-        }
-        else std::cout<<"Set keepalive count successfully\n";
-    }
+    this->handler = handler;
 }
 
 
-// Bind to port
-void TcpServer::bindPort()
+uint16_t TcpServer::getPort() const
 {
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr(m_ipAddress.c_str());
-    serv_addr.sin_port = m_port;
-
-    
-    if((bind(m_serverSocket, (struct sockaddr *)& serv_addr, sizeof(serv_addr))) < 0)
-    {
-          perror("bind failed");
-    }
-    std::cout << "Bind successfully!!!" << std::endl;
-}             
-
-
-// Listen clients
-void TcpServer::listenToClients()
-{
-    if(listen(m_serverSocket, m_maxClients) < 0)
-    {
-        perror("listen error");
-    }
-   std::cout << "Waiting for a client to connect..." << std::endl;
-}      
-
-
-//Set connection with client
-void TcpServer::acceptClient()
-{
-    socklen_t newClientAddrSize = sizeof(client_addr);
-    m_newClient = accept(m_serverSocket, (struct sockaddr *)&client_addr, &newClientAddrSize);
-    if(m_newClient < 0)
-    {
-        perror( "Error accepting request from client!" );
-    }
-    std::cout << "Connected with client!" << std::endl;
+    return port;
 }
 
 
- // Send message to client
-void TcpServer::sendMsg()
+uint16_t TcpServer::setPort( const uint16_t port) 
 {
-    puts(m_msg);
-    if((send(m_newClient, m_msg, number, 0)) < 0)
+    this->port = port;
+    restart(); 
+    return port;
+}
+
+
+//server restart
+TcpServer::status TcpServer::restart() 
+{
+    if(_status == status::up)
+    stop ();
+    return start();
+}
+
+
+// Entering the Connection Handling Thread
+void TcpServer::joinLoop()
+{
+    handler_thread.join();
+}
+
+
+//Send message to client
+void TcpServer::Client::sendMsg()
+{
+    puts(buffer);
+    if((send(socket, buffer, sizeof(buffer), 0)) < 0)
     {
-         perror( "Error send msg to the client!" );
+        perror( "Error send msg to the client!" );
     }
-    
-    std::cout<<"Send to client"<<m_msg<<std::endl;
+    std::cout<<"Send to client"<<buffer<<std::endl;
 }              
 
 
 // Receive message from client
-std::string TcpServer::receiveMsg()
+std::string TcpServer::Client::receiveMsg()
 {
-     memset(&m_msg, 0, sizeof(m_msg));
-     
-     number = recv(m_newClient, m_msg, sizeof(m_msg), 0);
-     std::cout << "Receive from client: " << m_msg << std::endl;
-     std::string check = std::string(m_msg);
+     memset(&buffer, 0, sizeof(buffer));
+     recv(socket, buffer, sizeof(buffer), 0);
+     std::cout << "Receive from client: " << buffer << std::endl;
+     std::string check = std::string(buffer);
      return check;
 }          
 
 
 // Regulates the order in which messages are exchanged between the client and the server
-void TcpServer::messageExchange()
+void TcpServer::Client::messageExchange() 
 {
-    memset(&m_msg, 0, sizeof(m_msg));
-    while((number = recv(m_newClient, m_msg, sizeof(m_msg), 0))>0)
+    memset(&buffer, 0, sizeof(buffer));
+    int number = 0;
+    while((number = recv(socket, buffer, sizeof(buffer), 0))>0)
     {
-        std::cout << "Receive from client: " << m_msg << std::endl;
-        send(m_newClient, m_msg, number, 0);
-        std::cout<<"Send to client: "<<m_msg <<std::endl;
+        std::cout << "Receive from client: " << buffer << std::endl;
+        send(socket, buffer, number, 0);
+        std::cout<<"Send to client: "<<buffer <<std::endl;
     }
 }
+
+
+//Server start
+TcpServer::status TcpServer::start() 
+{
+    struct sockaddr_in server;
+    server.sin_addr.s_addr =  inet_addr(m_ipAddress.c_str());;
+    server.sin_port = htons(port);
+    server.sin_family = AF_INET;
+    serv_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(serv_socket == -1) 
+    {
+        return _status = status::err_socket_init;
+    }
+
+    if (setsockopt (serv_socket, SOL_SOCKET, SO_KEEPALIVE, &m_keepalive, sizeof(m_keepalive)) < 0)    
+    {           
+        perror("\nSet keepalive error:\n");   
+    }  
+    else 
+        std::cout<<"\nSet keepalive successfully!!!";
+
+    if(bind(serv_socket,(struct sockaddr *)&server , sizeof(server)) < 0)
+    {
+         return _status = status::err_socket_bind;
+    }
+
+    if(listen(serv_socket, 3) < 0)
+    {
+        return _status = status::err_socket_listening;
+    }
+
+    _status = status::up;
+    handler_thread = std::thread([this]{handlingLoop();});
+    return _status;
+}
+
+
+//Server stop
+void TcpServer::stop() 
+{
+    _status = status::close;
+    close(serv_socket);
+    joinLoop();
+    for(std::thread& client_thr : client_handler_threads)
+    {
+        client_thr.join();
+    }
+    client_handler_threads.clear ();
+    client_handling_end.clear ();
+}
+
+
+// Connection Handling Function
+void TcpServer::handlingLoop() 
+{
+    while (_status == status::up) 
+    {
+        int client_socket;
+        struct sockaddr_in client_addr;
+        int addrlen = sizeof (struct sockaddr_in);
+        client_socket = accept(serv_socket, (struct sockaddr *)&client_addr, (socklen_t*)&addrlen);
+        setsockopt (client_socket, SOL_SOCKET, SO_KEEPALIVE, &m_keepalive, sizeof(m_keepalive));
+        if(client_socket >= 0 && _status == status::up)
+            client_handler_threads.push_back(std::thread([this, &client_socket, &client_addr] {
+                handler(Client(client_socket, client_addr));
+                client_handling_end.push_back (std::this_thread::get_id());
+            }));
+
+        if(!client_handling_end.empty())
+          for(std::list<std::thread::id>::iterator id_it = client_handling_end.begin (); !client_handling_end.empty() ; id_it = client_handling_end.begin())
+            for(std::list<std::thread>::iterator thr_it = client_handler_threads.begin (); thr_it != client_handler_threads.end () ; ++thr_it)
+              if(thr_it->get_id () == *id_it) {
+                thr_it->join();
+                client_handler_threads.erase(thr_it);
+                client_handling_end.erase (id_it);
+                break;
+              }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+}
+
+
+TcpServer::Client::Client(int socket, struct sockaddr_in address) : socket(socket), address(address) {}
+
+
+// copy constructor
+TcpServer::Client::Client(const TcpServer::Client& other) : socket(other.socket), address(other.address) {}
+
+
+TcpServer::Client::~Client() 
+{
+    shutdown(socket, 0); 
+    close(socket); 
+}
+
+
+uint32_t TcpServer::Client::getHost()const 
+{
+    return address.sin_addr.s_addr;
+}
+
+
+uint16_t TcpServer::Client::getPort()const
+{
+    return address.sin_port;
+}
+

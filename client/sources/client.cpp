@@ -1,3 +1,4 @@
+#include "../headers/client.h"
 #include <iostream> 
 #include <stdio.h> 
 #include <string.h> 
@@ -29,6 +30,7 @@ MyClient::TcpClient::TcpClient()
 
 MyClient::TcpClient::~TcpClient()
 {
+    shutdown(m_socket, 0);  
     close(m_socket);
 }
 
@@ -52,8 +54,9 @@ void TcpClient::createSocket()
             perror("\nCould not create socket: ");
         }
         else 
+        {
             std::cout<<"\nSocket created\n";
-        
+        }
         // Set keepalive options
 
         if (setsockopt (m_socket, SOL_SOCKET, SO_KEEPALIVE, &m_keepalive, sizeof(m_keepalive)) < 0)    
@@ -61,7 +64,9 @@ void TcpClient::createSocket()
             perror("\nSet keepalive error:\n");   
         }  
         else 
+        {
             std::cout<<"\nSet keepalive successfully!!!";
+        }
     }
 }
 
@@ -79,7 +84,9 @@ void MyClient::TcpClient::connectToServer()
     }
 
     else 
+    {
         std::cout<<"\nConnected to Server successfully!!!\n";
+    }
 }
 
 // Send message to server for interaction mode
@@ -95,8 +102,9 @@ std::string MyClient::TcpClient::send_msg()
         perror("\nSend failed Error: ");
     }
     else 
+    {
         std::cout<<"\nSend to server: "<<msg<<std::endl;
-
+    }
     return msg;
 }
 
@@ -108,7 +116,10 @@ void MyClient::TcpClient::send_msg(std::string msg)
     {
         perror("\nSend failed Error: ");
     }
-    else std::cout<<"\nSend to server: "<<msg<<std::endl;
+    else 
+        {
+            std::cout<<"\nSend to server: "<<msg<<std::endl;
+        }
 }
 
 // Receive message from server

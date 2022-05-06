@@ -1,6 +1,8 @@
 #include "../headers/functions_for_server.h"
 
 
+
+
 //Parser ip to std::string
 std::string getHostStr(const TcpServer::Client& client) 
 {
@@ -15,15 +17,17 @@ std::string getHostStr(const TcpServer::Client& client)
 
 int startServer()
 {
+
+  
 //Creating a TcpServer object with port and lambda function arguments for client processing
   TcpServer server( 3000,
-      [](TcpServer::Client client){
+      [&](TcpServer::Client client){
 
         //Outputting the address of the connected client to the console
           std::cout<<"Connected host:"<<getHostStr(client)<<std::endl;
 
         //Start receive and send message
-          client.messageExchange();
+          client.messageExchange((getHostStr(client)));
       }
   );
 
@@ -40,6 +44,8 @@ int startServer()
       std::cout<<"Server start error! Error code:"<< int(server.getStatus()) <<std::endl;
       return -1;
   }
-  
+  return 0;
 }
+
+
 

@@ -1,8 +1,4 @@
 #include "../headers/server.h"
-#include <chrono>
-#include <iostream>
-#include <string.h> 
-#include <string> 
 
 //The constructor accepts:
 //port - the port on which we will run the server
@@ -69,6 +65,7 @@ void TcpServer::Client::sendMsg()
 // Receive message from client
 std::string TcpServer::Client::receiveMsg()
 {
+    
      memset(&buffer, 0, sizeof(buffer));
      recv(socket, buffer, sizeof(buffer), 0);
      std::cout << "Receive from client: " << buffer << std::endl;
@@ -78,17 +75,27 @@ std::string TcpServer::Client::receiveMsg()
 
 
 // Regulates the order in which messages are exchanged between the client and the server
-void TcpServer::Client::messageExchange() 
+void TcpServer::Client::messageExchange(std::string conHost) 
 {
     memset(&buffer, 0, sizeof(buffer));
     int number = 0;
     while((number = recv(socket, buffer, sizeof(buffer), 0))>0)
     {
-        std::cout << "Receive from client: " << buffer << std::endl;
-        send(socket, buffer, number, 0);
-        std::cout<<"Send to client: "<<buffer <<std::endl;
+        std::unique_lock<std::mutex> locker(lockprint);
+        std::cout << "Receive from "<< conHost << ": " << buffer << std::endl;
+        if (strcmp(buffer, "exit") != 0)
+        {
+            send(socket, buffer, number, 0);
+            std::cout<<"Send to " << conHost << ": " << buffer <<std::endl;
+        }
+        else
+        {
+            std::cout<<"Close connection to host " << conHost << "; " <<std::endl;
+            break;
+        }
     }
 }
+
 
 
 //Server start
@@ -162,15 +169,17 @@ void TcpServer::handlingLoop()
         if(!client_handling_end.empty())
           for(std::list<std::thread::id>::iterator id_it = client_handling_end.begin (); !client_handling_end.empty() ; id_it = client_handling_end.begin())
             for(std::list<std::thread>::iterator thr_it = client_handler_threads.begin (); thr_it != client_handler_threads.end () ; ++thr_it)
-              if(thr_it->get_id () == *id_it) {
-                thr_it->join();
-                client_handler_threads.erase(thr_it);
-                client_handling_end.erase (id_it);
-                break;
-              }
+                if(thr_it->get_id () == *id_it) 
+                {
+                    thr_it->join();
+                    client_handler_threads.erase(thr_it);
+                    client_handling_end.erase (id_it);
+                    break;
+                }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+
 }
 
 
@@ -198,4 +207,3 @@ uint16_t TcpServer::Client::getPort()const
 {
     return address.sin_port;
 }
-

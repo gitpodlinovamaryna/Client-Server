@@ -12,18 +12,22 @@
 #include <netinet/in.h>	   
 #include <netinet/tcp.h> 
 #include <unistd.h>
+#include <vector>
+#include <chrono>
+#include <thread>
+#include <mutex>
+
 
 namespace MyClient
 {
-
     class TcpClient
     {
         private:
             int m_socket;
-            int m_connfd;
+            //int m_connfd;
             int m_port;
             int m_keepalive;
-            int m_buffesSize;
+            //int m_buffesSize;
             char m_msg[1024];
             std::string m_ipAddress;
             struct sockaddr_in serv_addr;

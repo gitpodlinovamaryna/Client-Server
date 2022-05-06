@@ -17,5 +17,6 @@ What to do:
 3)./server
 4)Open another terminal
 5) Go to the client directory and write in terminal ./build.sh
-6) cd build
+5.1). Start script start.sh(for test)
+5.2
 7) ./client (interactive mode) or ./client 3000 message (single message mode)

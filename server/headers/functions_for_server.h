@@ -3,7 +3,6 @@
 
 #include "server.h"
 
-
 std::string getHostStr(const TcpServer::Client& client);
 int startServer();
 

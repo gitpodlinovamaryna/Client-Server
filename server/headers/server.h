@@ -1,7 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-
 #include <cstdint>
 #include <functional>
 #include <thread>
@@ -17,6 +16,8 @@
 #include <netdb.h> 
 #include <netinet/tcp.h> 
 #include <iostream>
+#include <mutex>
+#include <cstring>
 
 //Buffer for receiving data from the client
 static constexpr uint16_t buffer_size = 4096;
@@ -28,7 +29,7 @@ public:
 
      //Client handler callback type
     typedef std::function<void(Client)> handler_function_t;
-
+    
      //Server Status
     enum class status : uint8_t 
     {
@@ -49,6 +50,7 @@ private:
     std::thread handler_thread;
     std::list<std::thread> client_handler_threads;
     std::list<std::thread::id> client_handling_end;
+    
     int serv_socket;
     void handlingLoop();
 
@@ -56,7 +58,8 @@ public:
 
     TcpServer(const uint16_t port, handler_function_t handler);
     ~TcpServer();
-
+    
+    
     //! Set client handler
     void setHandler(handler_function_t handler);
 
@@ -79,7 +82,7 @@ class TcpServer::Client
     char buffer[buffer_size];
 
 public:
-
+    std::mutex  lockprint;
     Client(int socket, struct sockaddr_in address);
     Client(const Client& other);
     ~Client();
@@ -87,7 +90,8 @@ public:
     uint16_t getPort() const;
     void sendMsg();
     std::string receiveMsg();
-    void messageExchange();
+    void messageExchange(std::string);
+    
 };
 
 #endif 
